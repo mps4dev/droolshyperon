@@ -1,37 +1,29 @@
 package pl.vig.droolshyperon.config;
 
-import org.kie.api.KieServices;
-import org.kie.api.builder.KieBuilder;
-import org.kie.api.builder.KieFileSystem;
-import org.kie.api.builder.KieModule;
-import org.kie.api.runtime.KieContainer;
+import org.kie.api.io.Resource;
 import org.kie.internal.io.ResourceFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import pl.vig.droolshyperon.model.Customer;
+import pl.vig.droolshyperon.service.ApplicationService;
+import pl.vig.droolshyperon.service.ApplicationServiceDroolsImpl;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Configuration
+@EnableAspectJAutoProxy
 @ComponentScan("pl.vig.droolshyperon.service")
 public class ApplicationConfig {
 
-    private static final List<String> DROOLS_FILES = Arrays.asList("Discount.xls");
-
     @Bean
-    public KieContainer kieContainer() {
-        KieServices kieServices = KieServices.Factory.get();
-
-        KieFileSystem kieFileSystem = kieServices.newKieFileSystem();
-        DROOLS_FILES.forEach(file -> kieFileSystem.write(ResourceFactory.newClassPathResource(file)));
-
-        KieBuilder kieBuilder = kieServices.newKieBuilder(kieFileSystem);
-        kieBuilder.buildAll();
-        KieModule kieModule = kieBuilder.getKieModule();
-
-        return kieServices.newKieContainer(kieModule.getReleaseId());
-
+    public ApplicationService<Customer> droolsService() {
+        List<Resource> resources = Customer.getRules()
+                .stream()
+                .map(ResourceFactory::newClassPathResource)
+                .collect(Collectors.toList());
+        return new ApplicationServiceDroolsImpl<>(new DroolsBeanFactory().getSessionForResources(resources));
     }
-
 }

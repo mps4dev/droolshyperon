@@ -12,8 +12,8 @@ public class ApplicationServiceDroolsImpl<T> implements ApplicationService<T> {
     @Setter
     private KieSession kieSession;
 
-    public void service(T obj) {
+    public int service(T obj, String... args) {
         kieSession.insert(obj);
-        kieSession.fireAllRules();
+        return kieSession.fireAllRules();
     }
 }
